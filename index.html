@@ -285,10 +285,12 @@ window.addEventListener("DOMContentLoaded",()=>{
   try{firebase.initializeApp(firebaseConfig);fb.auth=firebase.auth();fb.db=firebase.firestore();fb.db.enablePersistence({synchronizeTabs:true}).catch(()=>{});}
   catch(e){renderConfigMissing(e.message);return;}
   renderLoading("Conectando…");
+  fb.auth.setPersistence(firebase.auth.Auth.Persistence.SESSION).catch(function(){}).then(function(){
   fb.auth.onAuthStateChanged(u=>{
     stopSubs(); boxes={};entries={};userDoc=null;adminUnlocked=false;migrationTried=false;view={name:"home"};
     me.user=u; me.email=u?(u.email||"").toLowerCase():null; me.uid=u?u.uid:null;
     if(u){ startSubs(); } else { renderLogin(); }
+  });
   });
   window.addEventListener("online",render); window.addEventListener("offline",render);
 });
