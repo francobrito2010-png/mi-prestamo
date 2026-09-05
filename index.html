@@ -1,0 +1,937 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy"
+  content="default-src 'self';
+           script-src 'self' 'unsafe-inline' https://www.gstatic.com https://cdn.jsdelivr.net;
+           style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+           font-src https://fonts.gstatic.com;
+           img-src 'self' data: blob: https:;
+           connect-src 'self' https://*.googleapis.com https://*.gstatic.com https://firebaseinstallations.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com;
+           frame-ancestors 'none';
+           base-uri 'self';
+           form-action 'self';">
+<meta name="theme-color" content="#12785b">
+<title>Mi Préstamo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+  :root{
+    --paper:#F4F6F2; --surface:#FFFFFF; --surface-2:#FBFCFA;
+    --ink:#1B2621; --muted:#5E6B64; --faint:#8B968F;
+    --line:#E3E7DF; --line-strong:#D3D9CE;
+    --accent:#12785B; --accent-strong:#0E5F49; --accent-soft:#E4F1EB;
+    --paid:#1F8A5B; --paid-soft:#E5F3EA;
+    --due:#B24A2E; --due-soft:#F8E7E1;
+    --shadow:0 1px 2px rgba(27,38,33,.05), 0 6px 20px rgba(27,38,33,.06);
+    --shadow-lift:0 8px 30px rgba(27,38,33,.14);
+    --radius:18px; --radius-sm:12px;
+    --sans:"Figtree",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    --serif:"Fraunces",Georgia,serif;
+  }
+  @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+    --paper:#0F1512; --surface:#171E19; --surface-2:#141B16;
+    --ink:#EBEFEA; --muted:#9DA89F; --faint:#718075;
+    --line:#28322B; --line-strong:#39463C;
+    --accent:#34BC8C; --accent-strong:#43CD9C; --accent-soft:#16271F;
+    --paid:#42C489; --paid-soft:#15271D;
+    --due:#E17A5C; --due-soft:#2C1C17;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 6px 20px rgba(0,0,0,.32);
+    --shadow-lift:0 10px 34px rgba(0,0,0,.5);
+  }}
+  :root[data-theme="dark"]{
+    --paper:#0F1512; --surface:#171E19; --surface-2:#141B16;
+    --ink:#EBEFEA; --muted:#9DA89F; --faint:#718075;
+    --line:#28322B; --line-strong:#39463C;
+    --accent:#34BC8C; --accent-strong:#43CD9C; --accent-soft:#16271F;
+    --paid:#42C489; --paid-soft:#15271D;
+    --due:#E17A5C; --due-soft:#2C1C17;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 6px 20px rgba(0,0,0,.32);
+    --shadow-lift:0 10px 34px rgba(0,0,0,.5);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{background:var(--paper);color:var(--ink);font-family:var(--sans);line-height:1.5;
+    -webkit-font-smoothing:antialiased;padding:0 16px calc(40px + env(safe-area-inset-bottom))}
+  .wrap{max-width:540px;margin:0 auto}
+  button{font-family:inherit;cursor:pointer}
+  input,select,textarea{font-family:inherit}
+  img{max-width:100%}
+  [hidden]{display:none!important}
+
+  /* header */
+  header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:22px 2px 14px}
+  .brand{display:flex;align-items:center;gap:11px;min-width:0}
+  .mark{width:38px;height:38px;border-radius:11px;flex:none;
+    background:linear-gradient(150deg,var(--accent),var(--accent-strong));
+    display:grid;place-items:center;color:#fff;box-shadow:var(--shadow)}
+  .mark svg{width:20px;height:20px}
+  .brand h1{font-family:var(--serif);font-weight:600;font-size:19px;margin:0;letter-spacing:-.01em;line-height:1.1}
+  .brand p{margin:0;font-size:12px;color:var(--faint);font-weight:500}
+  .head-actions{display:flex;gap:8px}
+  .icon-btn{width:40px;height:40px;border-radius:12px;flex:none;border:1px solid var(--line);
+    background:var(--surface);color:var(--muted);display:grid;place-items:center;box-shadow:var(--shadow);transition:.15s}
+  .icon-btn:hover{color:var(--ink);border-color:var(--line-strong)}
+  .icon-btn svg{width:19px;height:19px}
+
+  .role-chip{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;
+    text-transform:uppercase;letter-spacing:.05em;padding:4px 9px;border-radius:99px;
+    background:var(--accent-soft);color:var(--accent)}
+  .role-chip.member{background:var(--paper);color:var(--muted);border:1px solid var(--line)}
+
+  .banner{display:flex;gap:10px;align-items:flex-start;background:var(--due-soft);
+    border:1px solid color-mix(in srgb,var(--due) 30%,transparent);color:var(--ink);
+    border-radius:14px;padding:12px 13px;margin-bottom:14px;font-size:13px}
+  .banner svg{width:17px;height:17px;flex:none;color:var(--due);margin-top:1px}
+
+  .hero{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);padding:22px 20px 20px;margin-bottom:14px}
+  .hero .who{font-size:13px;color:var(--muted);font-weight:600;display:flex;align-items:center;gap:7px}
+  .hero .who .dot{width:7px;height:7px;border-radius:50%;background:var(--accent)}
+  .hero .label{text-transform:uppercase;letter-spacing:.09em;font-size:11px;color:var(--faint);font-weight:700;margin-top:16px}
+  .balance{font-family:var(--serif);font-weight:600;letter-spacing:-.02em;
+    font-size:clamp(38px,12vw,52px);line-height:1;margin:3px 0 2px;font-variant-numeric:tabular-nums}
+  .balance.done{color:var(--paid)}
+  .of-total{font-size:13.5px;color:var(--muted)}
+  .of-total b{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums}
+  .track{height:10px;border-radius:99px;background:var(--surface-2);border:1px solid var(--line);
+    overflow:hidden;margin:18px 0 8px;display:flex}
+  .track i{display:block;background:linear-gradient(90deg,var(--accent),var(--accent-strong));transition:width .5s cubic-bezier(.2,.8,.2,1)}
+  .prog-cap{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted);font-weight:500}
+  .prog-cap b{color:var(--ink)}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:18px}
+  .stat{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--radius-sm);padding:11px 12px}
+  .stat .k{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--faint);font-weight:700}
+  .stat .v{font-size:17px;font-weight:600;margin-top:3px;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+  .stat .v small{font-size:12px;color:var(--muted);font-weight:500}
+
+  .next{display:flex;align-items:center;gap:14px;background:linear-gradient(155deg,var(--accent),var(--accent-strong));
+    color:#fff;border-radius:var(--radius);padding:16px 18px;margin-bottom:22px;box-shadow:var(--shadow)}
+  .next.allpaid{background:var(--paid-soft);color:var(--ink);border:1px solid color-mix(in srgb,var(--paid) 30%,transparent)}
+  .next .ico{width:42px;height:42px;border-radius:12px;flex:none;display:grid;place-items:center;background:rgba(255,255,255,.18)}
+  .next.allpaid .ico{background:var(--surface);color:var(--paid)}
+  .next .ico svg{width:22px;height:22px}
+  .next .txt{min-width:0}
+  .next .txt .t1{font-size:12px;opacity:.85;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+  .next.allpaid .txt .t1{opacity:1;color:var(--paid)}
+  .next .txt .t2{font-family:var(--serif);font-weight:600;font-size:20px;line-height:1.15;margin-top:2px;font-variant-numeric:tabular-nums}
+  .next .txt .t3{font-size:12.5px;opacity:.9;margin-top:1px}
+  .next .go{margin-left:auto;flex:none;background:#fff;color:var(--accent-strong);border:none;
+    border-radius:11px;padding:11px 15px;font-weight:700;font-size:13.5px;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+
+  .section-h{display:flex;align-items:baseline;justify-content:space-between;margin:0 4px 11px}
+  .section-h h2{font-family:var(--serif);font-weight:600;font-size:17px;margin:0;letter-spacing:-.01em}
+  .section-h span{font-size:12.5px;color:var(--faint);font-weight:500}
+  .ledger{display:flex;flex-direction:column;gap:9px}
+  .row{display:flex;align-items:center;gap:13px;text-align:left;width:100%;background:var(--surface);
+    border:1px solid var(--line);border-radius:14px;padding:12px 14px;box-shadow:var(--shadow);transition:.15s;color:inherit}
+  button.row:hover{border-color:var(--line-strong);transform:translateY(-1px)}
+  .row .num{width:38px;height:38px;border-radius:11px;flex:none;display:grid;place-items:center;
+    font-weight:700;font-size:15px;font-variant-numeric:tabular-nums;background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}
+  .row.s-paid .num{background:var(--paid-soft);color:var(--paid);border-color:transparent}
+  .row.s-due .num{background:var(--due-soft);color:var(--due);border-color:transparent}
+  .row.s-soon .num{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+  .row .mid{flex:1;min-width:0}
+  .row .mid .l1{font-weight:600;font-size:14.5px;display:flex;align-items:center;gap:8px}
+  .row .mid .l2{font-size:12.5px;color:var(--muted);margin-top:1px;font-variant-numeric:tabular-nums}
+  .pill{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:2px 8px;border-radius:99px;white-space:nowrap}
+  .pill.paid{background:var(--paid-soft);color:var(--paid)}
+  .pill.due{background:var(--due-soft);color:var(--due)}
+  .pill.soon{background:var(--accent-soft);color:var(--accent)}
+  .pill.pend{background:var(--surface-2);color:var(--faint);border:1px solid var(--line)}
+  .row .amt{text-align:right;flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+  .row .amt .a{font-weight:700;font-size:14.5px;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+  .row .amt .thumb{width:34px;height:34px;border-radius:8px;object-fit:cover;border:1px solid var(--line)}
+  .row .amt .chev{color:var(--faint)}
+  .row .amt .chev svg{width:18px;height:18px}
+
+  .foot{display:flex;flex-direction:column;gap:10px;margin-top:22px}
+  .foot button{display:flex;align-items:center;justify-content:center;gap:9px;background:var(--surface);
+    border:1px solid var(--line);color:var(--ink);border-radius:14px;padding:14px;font-weight:600;font-size:14px;box-shadow:var(--shadow);transition:.15s}
+  .foot button:hover{border-color:var(--line-strong)}
+  .foot button svg{width:18px;height:18px;color:var(--muted)}
+  .foot .primary{background:var(--accent);border-color:transparent;color:#fff}
+  .foot .primary svg{color:#fff}
+  .credit{text-align:center;color:var(--faint);font-size:11.5px;margin-top:20px;line-height:1.7}
+  .credit .sync{display:inline-flex;align-items:center;gap:6px}
+  .credit .sync .d{width:7px;height:7px;border-radius:50%;background:var(--paid)}
+  .credit .sync.off .d{background:var(--due)}
+
+  /* modal / sheet */
+  .scrim{position:fixed;inset:0;background:rgba(15,21,18,.55);backdrop-filter:blur(3px);
+    display:flex;align-items:flex-end;justify-content:center;z-index:50;opacity:0;transition:opacity .2s}
+  .scrim.open{opacity:1}
+  @media(min-width:560px){.scrim{align-items:center;padding:20px}}
+  .sheet{background:var(--surface);width:100%;max-width:540px;border-radius:22px 22px 0 0;box-shadow:var(--shadow-lift);
+    max-height:92vh;overflow-y:auto;transform:translateY(20px);transition:transform .25s cubic-bezier(.2,.8,.2,1);
+    padding:8px 20px calc(24px + env(safe-area-inset-bottom))}
+  @media(min-width:560px){.sheet{border-radius:22px}}
+  .scrim.open .sheet{transform:translateY(0)}
+  .grip{width:40px;height:4px;border-radius:99px;background:var(--line-strong);margin:8px auto 4px}
+  .sheet h3{font-family:var(--serif);font-weight:600;font-size:21px;margin:10px 2px 4px;letter-spacing:-.01em}
+  .sheet .sub{font-size:13px;color:var(--muted);margin:0 2px 18px}
+  .field{margin-bottom:15px}
+  .field label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin-bottom:6px;padding-left:2px}
+  .field input,.field select,.field textarea{width:100%;border:1px solid var(--line-strong);background:var(--surface-2);
+    color:var(--ink);border-radius:12px;padding:12px 13px;font-size:16px;transition:.15s}
+  .field textarea{resize:vertical;min-height:64px;font-size:15px}
+  .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+  .field .hint{font-size:11.5px;color:var(--faint);margin-top:5px;padding-left:2px}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .prefix{position:relative}
+  .prefix span.cur{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--faint);font-size:15px;font-weight:600;pointer-events:none}
+  .prefix input{padding-left:30px}
+  .drop{border:1.5px dashed var(--line-strong);border-radius:14px;padding:20px;text-align:center;
+    background:var(--surface-2);color:var(--muted);transition:.15s;display:block}
+  .drop:hover{border-color:var(--accent);color:var(--accent)}
+  .drop svg{width:26px;height:26px;margin-bottom:6px}
+  .drop .big{font-weight:600;font-size:14px;color:var(--ink)}
+  .drop .small{font-size:12px;margin-top:2px}
+  .preview{position:relative;border-radius:14px;overflow:hidden;border:1px solid var(--line)}
+  .preview img{display:block;width:100%;max-height:260px;object-fit:contain;background:var(--surface-2)}
+  .preview .rm{position:absolute;top:8px;right:8px;background:rgba(15,21,18,.7);color:#fff;border:none;width:32px;height:32px;border-radius:50%;display:grid;place-items:center}
+  .preview .rm svg{width:16px;height:16px}
+  .btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border:none;border-radius:13px;padding:15px;font-weight:700;font-size:15.5px;transition:.15s}
+  .btn.primary{background:var(--accent);color:#fff}
+  .btn.primary:hover{background:var(--accent-strong)}
+  .btn.ghost{background:transparent;color:var(--muted);padding:12px}
+  .btn.soft{background:var(--surface-2);border:1px solid var(--line);color:var(--ink)}
+  .btn.danger{background:var(--due-soft);color:var(--due)}
+  .btn:disabled{opacity:.5;cursor:default}
+  .sheet-actions{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+  .kv{display:flex;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid var(--line);font-size:14px}
+  .kv:last-child{border-bottom:none}
+  .kv .k{color:var(--muted)}
+  .kv .v{font-weight:600;font-variant-numeric:tabular-nums;text-align:right}
+  .memberrow{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px}
+  .memberrow .em{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .memberrow .tag{font-size:10.5px;font-weight:700;text-transform:uppercase;color:var(--accent);background:var(--accent-soft);padding:2px 7px;border-radius:99px}
+  .memberrow button{background:none;border:none;color:var(--due);font-weight:600;font-size:13px}
+  .err{background:var(--due-soft);color:var(--due);border-radius:10px;padding:10px 12px;font-size:13px;font-weight:500;margin-bottom:12px}
+
+  .viewer{position:fixed;inset:0;background:rgba(10,14,12,.92);z-index:60;display:none;align-items:center;justify-content:center;padding:20px;flex-direction:column;gap:16px}
+  .viewer.open{display:flex}
+  .viewer img{max-width:100%;max-height:80vh;border-radius:12px;box-shadow:var(--shadow-lift)}
+  .viewer button{background:rgba(255,255,255,.14);color:#fff;border:none;border-radius:11px;padding:11px 18px;font-weight:600}
+
+  /* login / gate screens */
+  .center-screen{min-height:88vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:8px;padding:20px 0}
+  .login-card{background:var(--surface);border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);
+    padding:28px 22px;width:100%;max-width:400px;text-align:left}
+  .login-card .lead{text-align:center;margin-bottom:22px}
+  .login-card .biglogo{width:56px;height:56px;border-radius:16px;margin:0 auto 12px;
+    background:linear-gradient(150deg,var(--accent),var(--accent-strong));display:grid;place-items:center;color:#fff;box-shadow:var(--shadow)}
+  .login-card .biglogo svg{width:28px;height:28px}
+  .login-card h2{font-family:var(--serif);font-weight:600;font-size:24px;margin:0 0 4px;text-align:center}
+  .login-card p.tag{color:var(--muted);font-size:13.5px;margin:0;text-align:center}
+  .linkbtn{background:none;border:none;color:var(--accent);font-weight:600;font-size:13.5px;padding:0}
+  .switch-line{text-align:center;font-size:13.5px;color:var(--muted);margin-top:16px}
+  .loading{display:flex;flex-direction:column;align-items:center;gap:14px;color:var(--muted);font-size:14px}
+  .spinner{width:34px;height:34px;border:3px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .empty{text-align:center;color:var(--muted);padding:20px 16px;font-size:13.5px}
+
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+  @media print{body{background:#fff;padding:0}header,.foot,.banner,.next .go,.icon-btn,.credit{display:none!important}.hero,.row{box-shadow:none}}
+</style>
+</head>
+<body>
+<script>
+  /* Anti-clickjacking (frame-buster portable) */
+  if (window.top !== window.self) { try{ window.top.location = window.self.location; }catch(e){ document.documentElement.style.display='none'; } }
+</script>
+
+<!-- Firebase SDK (compat) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+<!-- Sanitizer -->
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
+
+<div class="wrap">
+  <div id="root"></div>
+</div>
+
+<div class="viewer" id="viewer">
+  <img id="viewerImg" alt="Comprobante de pago">
+  <button id="viewerClose">Cerrar</button>
+</div>
+<div id="modalRoot"></div>
+
+<script>
+/* ====================================================================
+   CONFIGURACIÓN DE FIREBASE
+   Pega aquí el bloque que te da Firebase (Configuración del proyecto → Tus apps).
+   ==================================================================== */
+const firebaseConfig = {
+  apiKey: "PEGA_AQUI",
+  authDomain: "PEGA_AQUI",
+  projectId: "PEGA_AQUI",
+  storageBucket: "PEGA_AQUI",
+  messagingSenderId: "PEGA_AQUI",
+  appId: "PEGA_AQUI"
+};
+/* ==================================================================== */
+
+/* ---------- helpers ---------- */
+const FREQ = {
+  mensual:  {label:"Mensual",   add:(d,n)=>addMonths(d,n)},
+  quincenal:{label:"Quincenal", add:(d,n)=>addDays(d,n*15)},
+  semanal:  {label:"Semanal",   add:(d,n)=>addDays(d,n*7)},
+};
+const CURRENCIES = {EUR:"€", USD:"$", BRL:"R$", GBP:"£", MXN:"$", COP:"$", ARS:"$"};
+function addDays(d,n){const x=new Date(d);x.setDate(x.getDate()+n);return x;}
+function addMonths(d,n){const x=new Date(d);const day=x.getDate();x.setDate(1);x.setMonth(x.getMonth()+n);x.setDate(Math.min(day,daysInMonth(x)));return x;}
+function daysInMonth(d){return new Date(d.getFullYear(),d.getMonth()+1,0).getDate();}
+function todayISO(){return isoOf(new Date());}
+function isoOf(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+function parseISO(s){if(!s)return null;const p=String(s).split("-");return new Date(+p[0],+p[1]-1,+p[2]);}
+function fmtDate(iso){const d=parseISO(iso);if(!d||isNaN(d))return"—";return d.toLocaleDateString("es-ES",{day:"numeric",month:"short",year:"numeric"});}
+function fmtDateShort(iso){const d=parseISO(iso);if(!d||isNaN(d))return"—";return d.toLocaleDateString("es-ES",{day:"numeric",month:"short"});}
+function money(n){const cur=(state.config&&state.config.currency)||"EUR";
+  try{return new Intl.NumberFormat("es-ES",{style:"currency",currency:cur,maximumFractionDigits:2}).format(n||0);}
+  catch(e){return (CURRENCIES[cur]||"")+(n||0).toFixed(2);}}
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function clean(s){try{return DOMPurify.sanitize(String(s==null?"":s),{ALLOWED_TAGS:[],ALLOWED_ATTR:[]}).trim();}catch(e){return String(s==null?"":s).replace(/[<>]/g,"").trim();}}
+function el(html){const t=document.createElement("template");t.innerHTML=html.trim();return t.content.firstElementChild;}
+async function sha256(str){const b=new TextEncoder().encode(str);const h=await crypto.subtle.digest("SHA-256",b);
+  return Array.from(new Uint8Array(h)).map(x=>x.toString(16).padStart(2,"0")).join("");}
+function validEmail(e){return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);}
+
+/* ---------- state ---------- */
+let fb={auth:null,db:null};
+let me={user:null,email:null,isOwner:false,isMember:false};
+let access=null;           // meta/access doc {owner, members[], adminHash}
+let state={config:null, payments:{}, adminUnlocked:false};
+let subs=[]; let loanSubscribed=false; let syncPending=false;
+
+function defaultConfig(){return {borrowerName:"",currency:"EUR",numInstallments:6,installmentAmount:100,
+  principal:0,startDate:todayISO(),frequency:"mensual",note:""};}
+
+/* ---------- boot ---------- */
+window.addEventListener("DOMContentLoaded",()=>{
+  document.getElementById("viewerClose").addEventListener("click",()=>document.getElementById("viewer").classList.remove("open"));
+  document.getElementById("viewer").addEventListener("click",e=>{if(e.target.id==="viewer")e.currentTarget.classList.remove("open");});
+  try{const t=localStorage.getItem("mp_theme");if(t)document.documentElement.setAttribute("data-theme",t);}catch(e){}
+
+  if(!firebaseConfig || firebaseConfig.apiKey==="PEGA_AQUI"){ renderConfigMissing(); return; }
+  try{
+    firebase.initializeApp(firebaseConfig);
+    fb.auth=firebase.auth();
+    fb.db=firebase.firestore();
+    fb.db.enablePersistence({synchronizeTabs:true}).catch(()=>{});
+  }catch(e){ renderConfigMissing(e.message); return; }
+
+  renderLoading("Conectando…");
+  fb.auth.onAuthStateChanged(u=>{
+    me.user=u; me.email=u?(u.email||"").toLowerCase():null;
+    stopSubs(); state={config:null,payments:{},adminUnlocked:false}; access=null;
+    me.isOwner=false; me.isMember=false;
+    if(u){ startAccess(); } else { renderLogin(); }
+  });
+});
+
+function stopSubs(){subs.forEach(u=>{try{u();}catch(e){}});subs=[];loanSubscribed=false;}
+
+/* ---------- access / roles ---------- */
+function startAccess(){
+  renderLoading("Cargando tu préstamo…");
+  subs.push(fb.db.doc("meta/access").onSnapshot(snap=>{
+    if(snap.exists){
+      access=snap.data();
+      const members=(access.members||[]).map(x=>String(x).toLowerCase());
+      me.isOwner = (String(access.owner||"").toLowerCase()===me.email);
+      me.isMember = me.isOwner || members.includes(me.email);
+      if(!me.isMember){ renderNoAccess(); return; }
+      subscribeLoan();
+      render();
+    }else{
+      access=null; me.isOwner=false; me.isMember=false;
+      renderOnboarding(); // nobody set it up yet → this user can become owner
+    }
+  }, err=>{ renderNoAccess(err&&err.message); }));
+}
+
+function subscribeLoan(){
+  if(loanSubscribed) return; loanSubscribed=true;
+  subs.push(fb.db.doc("loan/config").onSnapshot(s=>{
+    state.config = s.exists ? s.data() : null;
+    if(s.metadata){ syncPending = s.metadata.hasPendingWrites; }
+    render();
+  }, err=>{}));
+  subs.push(fb.db.collection("payments").onSnapshot(s=>{
+    const m={}; s.forEach(d=>{ m[d.id]=d.data(); });
+    state.payments=m;
+    if(s.metadata){ syncPending = s.metadata.hasPendingWrites; }
+    render();
+  }, err=>{}));
+}
+
+/* ---------- derive ---------- */
+function derive(){
+  const c=state.config||defaultConfig();
+  const n=Math.max(1,Math.min(120,parseInt(c.numInstallments)||1));
+  const per=+c.installmentAmount||0;
+  const total=n*per;
+  const rows=[]; let paidCount=0,paidSum=0,firstUnpaid=-1;
+  const today=parseISO(todayISO());
+  for(let i=1;i<=n;i++){
+    const id="c"+i; const pay=state.payments[id];
+    const due=c.startDate?FREQ[c.frequency||"mensual"].add(parseISO(c.startDate),i-1):null;
+    let status;
+    if(pay){status="paid";paidCount++;paidSum+=(+pay.amount||0);}
+    else if(due&&due<today){status="due";}
+    else{status="pending";}
+    if(!pay&&firstUnpaid<0)firstUnpaid=i;
+    rows.push({i,id,pay,due:due?isoOf(due):null,status,per});
+  }
+  if(firstUnpaid>0){const r=rows[firstUnpaid-1];if(r.status==="pending")r.status="soon";r.isNext=true;}
+  return {rows,n,per,total,paidCount,paidSum,remaining:Math.max(0,total-paidSum),
+    nextRow:firstUnpaid>0?rows[firstUnpaid-1]:null,dueCount:rows.filter(r=>r.status==="due").length};
+}
+
+/* ---------- top-level screens ---------- */
+function renderConfigMissing(msg){
+  document.getElementById("root").innerHTML=`<div class="center-screen"><div class="login-card">
+    <div class="lead"><div class="biglogo">${logoSvg()}</div><h2>Falta configurar</h2>
+    <p class="tag">Aún no se ha pegado la configuración de Firebase.</p></div>
+    <div class="err">${esc(msg||"Pega el bloque de configuración de Firebase en el código.")}</div>
+  </div></div>`;
+}
+function renderLoading(txt){
+  document.getElementById("root").innerHTML=`<div class="center-screen"><div class="loading"><div class="spinner"></div><div>${esc(txt||"Cargando…")}</div></div></div>`;
+}
+function logoSvg(){return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h18M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7M3 7l2-3h14l2 3"/><circle cx="12" cy="13" r="2.5"/></svg>`;}
+
+/* ----- login ----- */
+let loginMode="in"; // "in" | "up"
+function renderLogin(){
+  const root=document.getElementById("root");
+  root.innerHTML="";
+  const card=el(`<div class="center-screen"><div class="login-card">
+    <div class="lead"><div class="biglogo">${logoSvg()}</div>
+      <h2>Mi Préstamo</h2><p class="tag">Control seguro de cuotas</p></div>
+    <div id="loginErr"></div>
+    <div class="field"><label>Correo</label><input type="email" id="lgEmail" autocomplete="username" placeholder="tucorreo@ejemplo.com"></div>
+    <div class="field"><label>Contraseña</label><input type="password" id="lgPass" autocomplete="current-password" placeholder="••••••••"></div>
+    <div class="sheet-actions">
+      <button class="btn primary" id="lgGo">${loginMode==="in"?"Entrar":"Crear cuenta"}</button>
+    </div>
+    <div class="switch-line" id="lgSwitch"></div>
+    <div class="switch-line"><button class="linkbtn" id="lgForgot">Olvidé mi contraseña</button></div>
+  </div></div>`);
+  root.appendChild(card);
+
+  const sw=card.querySelector("#lgSwitch");
+  sw.innerHTML = loginMode==="in"
+    ? `¿Primera vez? <button class="linkbtn" id="lgToUp">Crear una cuenta</button>`
+    : `¿Ya tienes cuenta? <button class="linkbtn" id="lgToIn">Entrar</button>`;
+  const toUp=card.querySelector("#lgToUp"); if(toUp) toUp.addEventListener("click",()=>{loginMode="up";renderLogin();});
+  const toIn=card.querySelector("#lgToIn"); if(toIn) toIn.addEventListener("click",()=>{loginMode="in";renderLogin();});
+
+  card.querySelector("#lgGo").addEventListener("click",async()=>{
+    const email=clean(card.querySelector("#lgEmail").value).toLowerCase();
+    const pass=card.querySelector("#lgPass").value;
+    const errBox=card.querySelector("#loginErr");
+    errBox.innerHTML="";
+    if(!validEmail(email)){errBox.innerHTML=`<div class="err">Escribe un correo válido.</div>`;return;}
+    if((pass||"").length<6){errBox.innerHTML=`<div class="err">La contraseña debe tener al menos 6 caracteres.</div>`;return;}
+    const btn=card.querySelector("#lgGo");btn.disabled=true;btn.textContent="Un momento…";
+    try{
+      if(loginMode==="in") await fb.auth.signInWithEmailAndPassword(email,pass);
+      else await fb.auth.createUserWithEmailAndPassword(email,pass);
+    }catch(e){
+      btn.disabled=false;btn.textContent=loginMode==="in"?"Entrar":"Crear cuenta";
+      errBox.innerHTML=`<div class="err">${esc(authErr(e))}</div>`;
+    }
+  });
+  card.querySelector("#lgForgot").addEventListener("click",async()=>{
+    const email=clean(card.querySelector("#lgEmail").value).toLowerCase();
+    const errBox=card.querySelector("#loginErr");
+    if(!validEmail(email)){errBox.innerHTML=`<div class="err">Escribe tu correo arriba y vuelve a tocar aquí.</div>`;return;}
+    try{await fb.auth.sendPasswordResetEmail(email);errBox.innerHTML=`<div class="err" style="background:var(--accent-soft);color:var(--accent)">Te enviamos un correo para restablecer la contraseña.</div>`;}
+    catch(e){errBox.innerHTML=`<div class="err">${esc(authErr(e))}</div>`;}
+  });
+}
+function authErr(e){
+  const c=e&&e.code||"";
+  if(c.includes("invalid-credential")||c.includes("wrong-password")||c.includes("user-not-found"))return "Correo o contraseña incorrectos.";
+  if(c.includes("email-already-in-use"))return "Ese correo ya tiene cuenta. Toca «Entrar».";
+  if(c.includes("weak-password"))return "La contraseña es muy débil (mínimo 6 caracteres).";
+  if(c.includes("too-many-requests"))return "Demasiados intentos. Espera un momento.";
+  if(c.includes("network"))return "Sin conexión. Revisa tu internet.";
+  if(c.includes("operation-not-allowed"))return "Falta activar «Correo/contraseña» en Firebase (Authentication).";
+  return "No se pudo. Inténtalo de nuevo.";
+}
+
+function renderNoAccess(msg){
+  document.getElementById("root").innerHTML=`<div class="center-screen"><div class="login-card">
+    <div class="lead"><div class="biglogo">${logoSvg()}</div><h2>Sin acceso</h2>
+    <p class="tag">Tu correo (${esc(me.email||"")}) todavía no tiene permiso para ver este préstamo.</p></div>
+    <p style="font-size:13.5px;color:var(--muted)">Pídele al dueño que te agregue desde <b>Editar datos → Personas con acceso</b>, usando exactamente este correo.</p>
+    <div class="sheet-actions"><button class="btn soft" id="naOut">Salir</button></div>
+  </div></div>`;
+  document.getElementById("naOut").addEventListener("click",()=>fb.auth.signOut());
+}
+
+function renderOnboarding(){
+  document.getElementById("root").innerHTML=`<div class="center-screen"><div class="login-card">
+    <div class="lead"><div class="biglogo">${logoSvg()}</div><h2>Configura tu préstamo</h2>
+    <p class="tag">Serás el <b>administrador</b>. Solo tú podrás editar o borrar cuotas.</p></div>
+    <p style="font-size:13.5px;color:var(--muted);margin-top:0">Define las cuotas y un <b>código de administrador</b>. Luego podrás dar acceso a tu compañero.</p>
+    <div class="sheet-actions"><button class="btn primary" id="obStart">Empezar</button>
+    <button class="btn ghost" id="obOut">Salir</button></div>
+  </div></div>`;
+  document.getElementById("obStart").addEventListener("click",()=>openSetup(true));
+  document.getElementById("obOut").addEventListener("click",()=>fb.auth.signOut());
+}
+
+/* ---------- main render ---------- */
+function render(){
+  if(!me.user||!me.isMember) return;
+  if(!state.config){
+    if(me.isOwner){ renderOnboardingConfigNeeded(); }
+    else { renderWaiting(); }
+    return;
+  }
+  const c=state.config, d=derive();
+  const root=document.getElementById("root");
+  root.innerHTML="";
+
+  // header
+  const header=el(`<header>
+    <div class="brand"><div class="mark">${logoSvg()}</div>
+      <div><h1>Préstamo</h1><p>${FREQ[c.frequency||"mensual"].label} · ${d.n} cuotas</p></div></div>
+    <div class="head-actions">
+      <button class="icon-btn" id="themeBtn" title="Tema"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <button class="icon-btn" id="menuBtn" title="Menú"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg></button>
+    </div></header>`);
+  root.appendChild(header);
+
+  // role + due banner
+  const roleWrap=el(`<div style="display:flex;align-items:center;gap:8px;margin:0 2px 14px">
+    <span class="role-chip ${me.isOwner?'':'member'}">${me.isOwner?'Administrador':'Solo lectura + registrar'}</span>
+    ${me.isOwner&&state.adminUnlocked?'<span class="role-chip">🔓 desbloqueado</span>':''}
+  </div>`);
+  root.appendChild(roleWrap);
+
+  if(d.dueCount>0){
+    root.appendChild(el(`<div class="banner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+      <div><b>${d.dueCount} cuota${d.dueCount>1?'s':''} vencida${d.dueCount>1?'s':''}.</b> Revisa abajo cuáles faltan por pagar.</div></div>`));
+  }
+
+  const pct=d.total>0?Math.round((d.paidSum/d.total)*100):0;
+  const done=d.remaining<=0&&d.total>0;
+  root.appendChild(el(`<div class="hero">
+    <div class="who"><span class="dot"></span>${c.borrowerName?esc(c.borrowerName):"Sin nombre — edita los datos"}</div>
+    <div class="label">${done?"Préstamo saldado":"Saldo pendiente"}</div>
+    <div class="balance ${done?"done":""}">${money(d.remaining)}</div>
+    <div class="of-total">de <b>${money(d.total)}</b> en total${c.principal&&+c.principal!==d.total?` · prestado ${money(+c.principal)}`:""}</div>
+    <div class="track"><i style="width:${Math.min(100,pct)}%"></i></div>
+    <div class="prog-cap"><span><b>${d.paidCount}</b> de ${d.n} cuotas pagadas</span><span>${pct}%</span></div>
+    <div class="stats">
+      <div class="stat"><div class="k">Pagado</div><div class="v">${money(d.paidSum)}</div></div>
+      <div class="stat"><div class="k">Cada cuota</div><div class="v">${money(d.per)}</div></div>
+      <div class="stat"><div class="k">Cuotas</div><div class="v">${d.paidCount}<small>/${d.n}</small></div></div>
+    </div></div>`));
+
+  // next
+  if(done||!d.nextRow){
+    root.appendChild(el(`<div class="next allpaid"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+      <div class="txt"><div class="t1">¡Todo al día!</div><div class="t2">No hay cuotas pendientes</div></div></div>`));
+  }else{
+    const nr=d.nextRow, overdue=nr.status==="due";
+    root.appendChild(el(`<div class="next"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+      <div class="txt"><div class="t1">${overdue?"⚠ Cuota vencida":"Próxima cuota"} · Nº ${nr.i}</div>
+      <div class="t2">${money(nr.per)}</div>
+      <div class="t3">${nr.due?(overdue?"Venció el ":"Vence el ")+fmtDate(nr.due):"Registra cuando pague"}</div></div>
+      <button class="go" data-pay="${nr.id}">Registrar</button></div>`));
+  }
+
+  root.appendChild(el(`<div class="section-h"><h2>Cuotas</h2><span>${me.isOwner?"toca una cuota":"toca para registrar/ver"}</span></div>`));
+  const ledger=el(`<div class="ledger"></div>`);
+  d.rows.forEach(r=>{
+    let pill,cls="";
+    if(r.status==="paid"){pill=`<span class="pill paid">Pagada</span>`;cls="s-paid";}
+    else if(r.status==="due"){pill=`<span class="pill due">Vencida</span>`;cls="s-due";}
+    else if(r.status==="soon"){pill=`<span class="pill soon">Próxima</span>`;cls="s-soon";}
+    else pill=`<span class="pill pend">Pendiente</span>`;
+    const sub=r.pay?("Pagada el "+fmtDate(r.pay.dateISO)+(r.pay.note?" · "+esc(r.pay.note):"")):(r.due?(r.status==="due"?"Venció "+fmtDateShort(r.due):"Vence "+fmtDateShort(r.due)):"Sin fecha");
+    const right=r.pay?`<div class="a">${money(r.pay.amount)}</div>`+(r.pay.receipt?`<img class="thumb" data-zoom="${r.id}" src="${r.pay.receipt}" alt="Comprobante">`:``)
+      :`<div class="a" style="color:var(--faint)">${money(r.per)}</div><div class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></div>`;
+    ledger.appendChild(el(`<button class="row ${cls}" data-pay="${r.id}">
+      <div class="num">${r.i}</div>
+      <div class="mid"><div class="l1">Cuota ${r.i} ${pill}</div><div class="l2">${sub}</div></div>
+      <div class="amt">${right}</div></button>`));
+  });
+  root.appendChild(ledger);
+
+  const foot=el(`<div class="foot">
+    <button class="primary" id="shareBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M16 6l-4-4-4 4M12 2v13"/></svg>Compartir resumen</button>
+    ${me.isOwner?`<button id="editBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>Editar datos y accesos</button>`:``}
+  </div>`);
+  root.appendChild(foot);
+
+  const off = !navigator.onLine || syncPending;
+  root.appendChild(el(`<p class="credit">
+    <span class="sync ${off?'off':''}"><span class="d"></span>${off?'Guardando… se sincroniza al reconectar':'Sincronizado en tiempo real'}</span><br>
+    Sesión: ${esc(me.email||"")} · <a href="#" id="logoutLink" style="color:var(--accent)">Salir</a>
+  </p>`));
+
+  // wire
+  root.querySelectorAll("[data-pay]").forEach(b=>b.addEventListener("click",e=>{e.stopPropagation();openPayment(b.getAttribute("data-pay"));}));
+  root.querySelectorAll("[data-zoom]").forEach(img=>img.addEventListener("click",e=>{
+    e.stopPropagation(); const v=document.getElementById("viewer");document.getElementById("viewerImg").src=img.src;v.classList.add("open");}));
+  document.getElementById("themeBtn").addEventListener("click",toggleTheme);
+  document.getElementById("menuBtn").addEventListener("click",openMenu);
+  document.getElementById("shareBtn").addEventListener("click",openShare);
+  const eb=document.getElementById("editBtn"); if(eb) eb.addEventListener("click",()=>requireAdmin(()=>openSetup(false)));
+  document.getElementById("logoutLink").addEventListener("click",e=>{e.preventDefault();fb.auth.signOut();});
+}
+
+function renderOnboardingConfigNeeded(){
+  document.getElementById("root").innerHTML=`<div class="center-screen"><div class="login-card">
+    <div class="lead"><div class="biglogo">${logoSvg()}</div><h2>Configura tu préstamo</h2>
+    <p class="tag">Define las cuotas para empezar.</p></div>
+    <div class="sheet-actions"><button class="btn primary" id="cfgStart">Configurar</button>
+    <button class="btn ghost" id="cfgOut">Salir</button></div></div></div>`;
+  document.getElementById("cfgStart").addEventListener("click",()=>openSetup(!access));
+  document.getElementById("cfgOut").addEventListener("click",()=>fb.auth.signOut());
+}
+function renderWaiting(){
+  document.getElementById("root").innerHTML=`<div class="center-screen"><div class="login-card">
+    <div class="lead"><div class="biglogo">${logoSvg()}</div><h2>Casi listo</h2>
+    <p class="tag">El administrador aún no ha configurado el préstamo. Vuelve en un momento.</p></div>
+    <div class="sheet-actions"><button class="btn soft" id="wOut">Salir</button></div></div></div>`;
+  document.getElementById("wOut").addEventListener("click",()=>fb.auth.signOut());
+}
+
+/* ---------- theme ---------- */
+function toggleTheme(){
+  const root=document.documentElement,cur=root.getAttribute("data-theme");
+  const sysDark=window.matchMedia("(prefers-color-scheme:dark)").matches;
+  let next; if(!cur)next=sysDark?"light":"dark"; else next=cur==="dark"?"light":"dark";
+  root.setAttribute("data-theme",next);
+  try{localStorage.setItem("mp_theme",next);}catch(e){}
+}
+
+/* ---------- modal helper ---------- */
+function openModal(node){
+  const root=document.getElementById("modalRoot");
+  const scrim=el(`<div class="scrim"></div>`); scrim.appendChild(node); root.appendChild(scrim);
+  requestAnimationFrame(()=>scrim.classList.add("open"));
+  scrim.addEventListener("click",e=>{if(e.target===scrim)closeModal(scrim);});
+  scrim._close=()=>closeModal(scrim); return scrim;
+}
+function closeModal(scrim){scrim.classList.remove("open");setTimeout(()=>scrim.remove(),220);}
+
+/* ---------- admin gate ---------- */
+function requireAdmin(cb){
+  if(!me.isOwner){ return; } // members never reach here
+  if(state.adminUnlocked){ cb(); return; }
+  if(!access||!access.adminHash){ // no code set yet → let owner proceed (will set during setup)
+    cb(); return;
+  }
+  const sheet=el(`<div class="sheet"><div class="grip"></div>
+    <h3>Código de administrador</h3><p class="sub">Introdúcelo para editar o borrar. Es tu segunda barrera de seguridad.</p>
+    <div id="adErr"></div>
+    <div class="field"><label>Código</label><input type="password" id="adCode" inputmode="numeric" autocomplete="off" placeholder="••••"></div>
+    <div class="sheet-actions"><button class="btn primary" id="adOk">Desbloquear</button>
+    <button class="btn ghost" id="adCancel">Cancelar</button></div></div>`);
+  const scrim=openModal(sheet);
+  const go=async()=>{
+    const code=sheet.querySelector("#adCode").value;
+    const h=await sha256(code);
+    if(h===access.adminHash){ state.adminUnlocked=true; scrim._close(); render(); cb(); }
+    else{ sheet.querySelector("#adErr").innerHTML=`<div class="err">Código incorrecto.</div>`; }
+  };
+  sheet.querySelector("#adOk").addEventListener("click",go);
+  sheet.querySelector("#adCode").addEventListener("keydown",e=>{if(e.key==="Enter")go();});
+  sheet.querySelector("#adCancel").addEventListener("click",()=>scrim._close());
+  setTimeout(()=>sheet.querySelector("#adCode").focus(),120);
+}
+
+/* ---------- menu ---------- */
+function openMenu(){
+  const sheet=el(`<div class="sheet"><div class="grip"></div>
+    <h3>Menú</h3><p class="sub">${esc(me.email||"")} · ${me.isOwner?"Administrador":"Solo lectura + registrar"}</p>
+    <div class="sheet-actions">
+      <button class="btn soft" id="mShare">Compartir resumen</button>
+      ${me.isOwner?`<button class="btn soft" id="mEdit">Editar datos y accesos</button>`:``}
+      ${me.isOwner&&state.adminUnlocked?`<button class="btn soft" id="mLock">🔒 Bloquear administrador</button>`:``}
+      <button class="btn danger" id="mOut">Cerrar sesión</button>
+      <button class="btn ghost" id="mClose">Cerrar</button>
+    </div></div>`);
+  const scrim=openModal(sheet);
+  sheet.querySelector("#mClose").addEventListener("click",()=>scrim._close());
+  sheet.querySelector("#mShare").addEventListener("click",()=>{scrim._close();openShare();});
+  sheet.querySelector("#mOut").addEventListener("click",()=>fb.auth.signOut());
+  const me1=sheet.querySelector("#mEdit"); if(me1) me1.addEventListener("click",()=>{scrim._close();requireAdmin(()=>openSetup(false));});
+  const ml=sheet.querySelector("#mLock"); if(ml) ml.addEventListener("click",()=>{state.adminUnlocked=false;scrim._close();render();});
+}
+
+/* ---------- payment (view / form) ---------- */
+function openPayment(id){
+  const existing=state.payments[id];
+  if(existing) openPaymentView(id); else openPaymentForm(id,null);
+}
+function openPaymentView(id){
+  const n=parseInt(id.slice(1)); const p=state.payments[id];
+  const sheet=el(`<div class="sheet"><div class="grip"></div>
+    <h3>Cuota ${n} — pagada</h3><p class="sub">Detalle del pago registrado.</p>
+    <div class="kv"><span class="k">Monto</span><span class="v">${money(p.amount)}</span></div>
+    <div class="kv"><span class="k">Fecha</span><span class="v">${fmtDate(p.dateISO)}</span></div>
+    ${p.note?`<div class="kv"><span class="k">Nota</span><span class="v">${esc(p.note)}</span></div>`:``}
+    ${p.receipt?`<div class="field" style="margin-top:14px"><label>Comprobante</label><div class="preview"><img id="pvImg" src="${p.receipt}" alt="Comprobante"></div></div>`:`<p class="empty">Sin comprobante adjunto.</p>`}
+    <div class="sheet-actions">
+      ${me.isOwner?`<button class="btn soft" id="pvEdit">Corregir</button><button class="btn danger" id="pvDel">Eliminar</button>`:``}
+      <button class="btn ghost" id="pvClose">Cerrar</button>
+    </div></div>`);
+  const scrim=openModal(sheet);
+  const im=sheet.querySelector("#pvImg"); if(im) im.addEventListener("click",()=>{const v=document.getElementById("viewer");document.getElementById("viewerImg").src=im.src;v.classList.add("open");});
+  sheet.querySelector("#pvClose").addEventListener("click",()=>scrim._close());
+  const ed=sheet.querySelector("#pvEdit"); if(ed) ed.addEventListener("click",()=>{scrim._close();requireAdmin(()=>openPaymentForm(id,p));});
+  const dl=sheet.querySelector("#pvDel"); if(dl) dl.addEventListener("click",()=>{scrim._close();requireAdmin(()=>confirmDelete(id,n));});
+}
+function confirmDelete(id,n){
+  const sheet=el(`<div class="sheet"><div class="grip"></div>
+    <h3>Eliminar cuota ${n}</h3><p class="sub">Esto borra el pago registrado. Solo tú (administrador) puedes hacerlo.</p>
+    <div class="sheet-actions"><button class="btn danger" id="dOk">Sí, eliminar el pago</button>
+    <button class="btn ghost" id="dNo">Cancelar</button></div></div>`);
+  const scrim=openModal(sheet);
+  sheet.querySelector("#dNo").addEventListener("click",()=>scrim._close());
+  sheet.querySelector("#dOk").addEventListener("click",async()=>{
+    scrim._close();
+    try{ await fb.db.collection("payments").doc(id).delete(); }catch(e){ alert("No se pudo eliminar: "+(e.message||e)); }
+  });
+}
+function openPaymentForm(id,existing){
+  const n=parseInt(id.slice(1)); const c=state.config; let receipt=existing?(existing.receipt||""):"";
+  const sheet=el(`<div class="sheet"><div class="grip"></div>
+    <h3>Cuota ${n}</h3><p class="sub">${existing?"Corregir el pago (administrador)":"Registrar el pago de esta cuota"}</p>
+    <div class="two">
+      <div class="field"><label>Fecha del pago</label><input type="date" id="pDate" value="${existing?existing.dateISO:todayISO()}"></div>
+      <div class="field"><label>Monto pagado</label><div class="prefix"><span class="cur">${CURRENCIES[c.currency||"EUR"]||""}</span><input type="number" inputmode="decimal" id="pAmount" step="0.01" value="${existing?existing.amount:(c.installmentAmount||"")}"></div></div>
+    </div>
+    <div class="field"><label>Nota (opcional)</label><input type="text" id="pNote" maxlength="120" placeholder="Ej: pagó en efectivo" value="${existing?esc(existing.note||''):''}"></div>
+    <div class="field"><label>Comprobante de pago</label><div id="recSlot"></div><div class="hint">Foto o captura del recibo, transferencia, etc.</div></div>
+    <div class="sheet-actions"><button class="btn primary" id="pSave">${existing?"Guardar cambios":"Marcar como pagada"}</button>
+    <button class="btn ghost" id="pCancel">Cancelar</button></div></div>`);
+  const scrim=openModal(sheet); const recSlot=sheet.querySelector("#recSlot");
+  function renderRec(){
+    recSlot.innerHTML="";
+    if(receipt){
+      const pv=el(`<div class="preview"><img src="${receipt}" alt="Comprobante"><button class="rm" title="Quitar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>`);
+      pv.querySelector(".rm").addEventListener("click",()=>{receipt="";renderRec();});
+      recSlot.appendChild(pv);
+    }else{
+      const lab=el(`<label class="drop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3.2"/></svg>
+        <div class="big">Añadir foto del comprobante</div><div class="small">Toca para tomar o elegir una foto</div>
+        <input type="file" accept="image/*" style="display:none" id="recFile"></label>`);
+      lab.querySelector("#recFile").addEventListener("change",async e=>{
+        const f=e.target.files[0]; if(!f)return; lab.querySelector(".big").textContent="Procesando…";
+        try{receipt=await resizeImage(f);}catch(err){alert("No se pudo cargar la imagen.");}
+        renderRec();
+      });
+      recSlot.appendChild(lab);
+    }
+  }
+  renderRec();
+  sheet.querySelector("#pCancel").addEventListener("click",()=>scrim._close());
+  sheet.querySelector("#pSave").addEventListener("click",async()=>{
+    const amount=parseFloat(sheet.querySelector("#pAmount").value)||0;
+    const dateISO=sheet.querySelector("#pDate").value||todayISO();
+    const note=clean(sheet.querySelector("#pNote").value).slice(0,120);
+    const pay={n,amount,dateISO,note,receipt,createdAt:existing?(existing.createdAt||Date.now()):Date.now(),
+      updatedAt:Date.now(), by: me.email};
+    scrim._close();
+    try{ await fb.db.collection("payments").doc(id).set(pay); }
+    catch(e){ alert("No se pudo guardar: "+(e.message||e)); }
+  });
+}
+
+/* ---------- image resize ---------- */
+function resizeImage(file){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader(); reader.onerror=reject;
+    reader.onload=()=>{ const img=new Image(); img.onerror=reject;
+      img.onload=()=>{ const MAX=1100; let{width:w,height:h}=img;
+        if(w>MAX||h>MAX){const s=Math.min(MAX/w,MAX/h);w=Math.round(w*s);h=Math.round(h*s);}
+        const cv=document.createElement("canvas");cv.width=w;cv.height=h;cv.getContext("2d").drawImage(img,0,0,w,h);
+        let q=0.72,out=cv.toDataURL("image/jpeg",q);
+        while(out.length>180000&&q>0.35){q-=0.1;out=cv.toDataURL("image/jpeg",q);}
+        resolve(out);
+      }; img.src=reader.result; };
+    reader.readAsDataURL(file);
+  });
+}
+
+/* ---------- setup / config sheet ---------- */
+function openSetup(isFirst){
+  const c=state.config||defaultConfig();
+  const curOpts=Object.keys(CURRENCIES).map(k=>`<option value="${k}" ${c.currency===k?"selected":""}>${k} ${CURRENCIES[k]}</option>`).join("");
+  const freqOpts=Object.keys(FREQ).map(k=>`<option value="${k}" ${(c.frequency||"mensual")===k?"selected":""}>${FREQ[k].label}</option>`).join("");
+  const members=(access&&access.members||[]).map(x=>String(x).toLowerCase());
+  const membersHtml = members.map(m=>{
+    const owner=(String(access.owner||"").toLowerCase()===m);
+    return `<div class="memberrow"><span class="em">${esc(m)}</span>${owner?'<span class="tag">Dueño</span>':`<button data-remove="${esc(m)}">Quitar</button>`}</div>`;
+  }).join("");
+
+  const sheet=el(`<div class="sheet"><div class="grip"></div>
+    <h3>${isFirst?"Configura tu préstamo":"Editar datos y accesos"}</h3>
+    <p class="sub">Cuotas fijas iguales. Cambia lo que necesites.</p>
+    <div id="setErr"></div>
+    <div class="field"><label>¿A quién le prestaste?</label><input type="text" id="cName" maxlength="60" placeholder="Nombre de la persona" value="${esc(c.borrowerName||'')}"></div>
+    <div class="two">
+      <div class="field"><label>Nº de cuotas</label><input type="number" id="cNum" min="1" max="120" value="${c.numInstallments||6}"></div>
+      <div class="field"><label>Valor de cada cuota</label><div class="prefix"><span class="cur" id="curSym">${CURRENCIES[c.currency||"EUR"]||""}</span><input type="number" id="cAmt" step="0.01" value="${c.installmentAmount||''}"></div></div>
+    </div>
+    <div class="two">
+      <div class="field"><label>Moneda</label><select id="cCur">${curOpts}</select></div>
+      <div class="field"><label>Frecuencia</label><select id="cFreq">${freqOpts}</select></div>
+    </div>
+    <div class="two">
+      <div class="field"><label>Fecha 1ª cuota</label><input type="date" id="cStart" value="${c.startDate||todayISO()}"></div>
+      <div class="field"><label>Monto prestado <span style="font-weight:400;color:var(--faint)">(opc.)</span></label><div class="prefix"><span class="cur">${CURRENCIES[c.currency||"EUR"]||""}</span><input type="number" id="cPrin" step="0.01" value="${c.principal||''}" placeholder="opcional"></div></div>
+    </div>
+    <div class="field"><div class="hint" id="totalHint"></div></div>
+
+    <h3 style="font-size:17px;margin-top:20px">Código de administrador</h3>
+    <p class="sub">${access&&access.adminHash?"Déjalo en blanco para no cambiarlo.":"Necesario para editar o borrar cuotas."}</p>
+    <div class="two">
+      <div class="field"><label>${access&&access.adminHash?"Nuevo código":"Código"}</label><input type="password" id="cCode1" inputmode="numeric" autocomplete="off" placeholder="mín. 4 dígitos"></div>
+      <div class="field"><label>Repetir</label><input type="password" id="cCode2" inputmode="numeric" autocomplete="off" placeholder="repetir"></div>
+    </div>
+
+    <h3 style="font-size:17px;margin-top:20px">Personas con acceso</h3>
+    <p class="sub">Agrega el correo EXACTO de tu compañero. Podrá ver y registrar pagos, pero no borrar ni editar.</p>
+    <div id="memberList">${membersHtml||'<p class="empty">Solo tú por ahora.</p>'}</div>
+    <div class="field" style="margin-top:10px"><label>Agregar por correo</label>
+      <div style="display:flex;gap:8px"><input type="email" id="cNewMember" placeholder="correo@ejemplo.com" style="flex:1">
+      <button class="btn soft" id="cAddMember" style="width:auto;padding:0 16px">Agregar</button></div>
+    </div>
+
+    <div class="sheet-actions">
+      <button class="btn primary" id="cSave">${isFirst?"Crear préstamo":"Guardar"}</button>
+      <button class="btn ghost" id="cCancel">Cancelar</button>
+    </div></div>`);
+  const scrim=openModal(sheet);
+  let pendingMembers=members.slice();
+
+  const upd=()=>{
+    const nn=parseInt(sheet.querySelector("#cNum").value)||0, a=parseFloat(sheet.querySelector("#cAmt").value)||0;
+    const cur=sheet.querySelector("#cCur").value; sheet.querySelector("#curSym").textContent=CURRENCIES[cur]||"";
+    let t; try{t=new Intl.NumberFormat("es-ES",{style:"currency",currency:cur}).format(nn*a);}catch(e){t=(nn*a).toFixed(2);}
+    sheet.querySelector("#totalHint").innerHTML=`Total a devolver: <b style="color:var(--ink)">${t}</b> (${nn} × cuota)`;
+  };
+  ["cNum","cAmt","cCur"].forEach(id=>sheet.querySelector("#"+id).addEventListener("input",upd)); upd();
+
+  function paintMembers(){
+    const box=sheet.querySelector("#memberList");
+    const ownerEmail=(access?String(access.owner).toLowerCase():me.email);
+    box.innerHTML = pendingMembers.length?pendingMembers.map(m=>{
+      const owner=(ownerEmail===m);
+      return `<div class="memberrow"><span class="em">${esc(m)}</span>${owner?'<span class="tag">Dueño</span>':`<button data-remove="${esc(m)}">Quitar</button>`}</div>`;
+    }).join(""):'<p class="empty">Solo tú por ahora.</p>';
+    box.querySelectorAll("[data-remove]").forEach(b=>b.addEventListener("click",()=>{
+      pendingMembers=pendingMembers.filter(x=>x!==b.getAttribute("data-remove")); paintMembers();
+    }));
+  }
+  if(!access){ pendingMembers=[me.email]; }
+  paintMembers();
+
+  sheet.querySelector("#cAddMember").addEventListener("click",()=>{
+    const nm=clean(sheet.querySelector("#cNewMember").value).toLowerCase();
+    const errBox=sheet.querySelector("#setErr"); errBox.innerHTML="";
+    if(!validEmail(nm)){errBox.innerHTML=`<div class="err">Escribe un correo válido.</div>`;return;}
+    if(!pendingMembers.includes(nm)) pendingMembers.push(nm);
+    sheet.querySelector("#cNewMember").value=""; paintMembers();
+  });
+
+  sheet.querySelector("#cCancel").addEventListener("click",()=>scrim._close());
+  sheet.querySelector("#cSave").addEventListener("click",async()=>{
+    const errBox=sheet.querySelector("#setErr"); errBox.innerHTML="";
+    const nc={
+      borrowerName: clean(sheet.querySelector("#cName").value).slice(0,60),
+      currency: sheet.querySelector("#cCur").value,
+      numInstallments: Math.max(1,Math.min(120,parseInt(sheet.querySelector("#cNum").value)||1)),
+      installmentAmount: parseFloat(sheet.querySelector("#cAmt").value)||0,
+      principal: parseFloat(sheet.querySelector("#cPrin").value)||0,
+      startDate: sheet.querySelector("#cStart").value||todayISO(),
+      frequency: sheet.querySelector("#cFreq").value,
+      note: (c.note||""),
+      updatedAt: Date.now()
+    };
+    if(nc.installmentAmount<=0){errBox.innerHTML=`<div class="err">Pon el valor de cada cuota.</div>`;return;}
+
+    // admin code
+    const code1=sheet.querySelector("#cCode1").value, code2=sheet.querySelector("#cCode2").value;
+    let adminHash = access&&access.adminHash?access.adminHash:null;
+    if(code1||code2||!adminHash){
+      if(code1.length<4){errBox.innerHTML=`<div class="err">El código debe tener al menos 4 dígitos.</div>`;return;}
+      if(code1!==code2){errBox.innerHTML=`<div class="err">Los códigos no coinciden.</div>`;return;}
+      adminHash=await sha256(code1);
+    }
+    // ensure owner in members
+    const ownerEmail=(access?String(access.owner).toLowerCase():me.email);
+    if(!pendingMembers.includes(ownerEmail)) pendingMembers.unshift(ownerEmail);
+
+    const btn=sheet.querySelector("#cSave");btn.disabled=true;btn.textContent="Guardando…";
+    try{
+      const accessDoc={owner:ownerEmail, members:pendingMembers, adminHash, updatedAt:Date.now()};
+      if(!access){ accessDoc.createdAt=Date.now(); await fb.db.doc("meta/access").set(accessDoc); }
+      else { await fb.db.doc("meta/access").set(accessDoc); }
+      if(!state.config){ nc.createdAt=Date.now(); }
+      await fb.db.doc("loan/config").set(nc);
+      state.adminUnlocked=true; // just proved admin by setting/keeping code
+      scrim._close();
+    }catch(e){
+      btn.disabled=false;btn.textContent=isFirst?"Crear préstamo":"Guardar";
+      errBox.innerHTML=`<div class="err">No se pudo guardar: ${esc(e.message||e)}</div>`;
+    }
+  });
+}
+
+/* ---------- share ---------- */
+function openShare(){
+  const c=state.config, d=derive(); const lines=[];
+  lines.push("📋 RESUMEN DEL PRÉSTAMO");
+  if(c.borrowerName) lines.push(c.borrowerName);
+  lines.push("");
+  lines.push("Total a devolver: "+money(d.total));
+  lines.push("Pagado: "+money(d.paidSum)+" ("+d.paidCount+"/"+d.n+" cuotas)");
+  lines.push("Saldo pendiente: "+money(d.remaining));
+  lines.push("");
+  d.rows.forEach(r=>{const mark=r.status==="paid"?"✅":(r.status==="due"?"⚠️":"⬜");
+    const info=r.pay?("pagada "+fmtDateShort(r.pay.dateISO)):(r.due?("vence "+fmtDateShort(r.due)):"pendiente");
+    lines.push(`${mark} Cuota ${r.i} · ${money(r.per)} · ${info}`);});
+  if(d.dueCount>0) lines.push("\n⚠️ "+d.dueCount+" cuota(s) vencida(s)");
+  const text=lines.join("\n");
+  const sheet=el(`<div class="sheet"><div class="grip"></div>
+    <h3>Compartir resumen</h3><p class="sub">Envíaselo a la persona por WhatsApp o guárdalo.</p>
+    <div class="field"><textarea id="shareTxt" style="min-height:200px;font-family:ui-monospace,monospace;font-size:13px" readonly>${esc(text)}</textarea></div>
+    <div class="sheet-actions">
+      <button class="btn primary" id="shSend">Compartir</button>
+      <button class="btn soft" id="shCopy">Copiar texto</button>
+      <button class="btn soft" id="shPrint">Imprimir / Guardar PDF</button>
+      <button class="btn ghost" id="shCancel">Cerrar</button></div></div>`);
+  const scrim=openModal(sheet);
+  sheet.querySelector("#shCancel").addEventListener("click",()=>scrim._close());
+  sheet.querySelector("#shSend").addEventListener("click",async()=>{
+    if(navigator.share){try{await navigator.share({title:"Resumen del préstamo",text});}catch(e){}}
+    else copyText(text,sheet.querySelector("#shSend"));});
+  sheet.querySelector("#shCopy").addEventListener("click",()=>copyText(text,sheet.querySelector("#shCopy")));
+  sheet.querySelector("#shPrint").addEventListener("click",()=>{scrim._close();setTimeout(()=>window.print(),200);});
+}
+function copyText(text,btn){const done=()=>{const o=btn.textContent;btn.textContent="¡Copiado!";setTimeout(()=>btn.textContent=o,1400);};
+  if(navigator.clipboard)navigator.clipboard.writeText(text).then(done).catch(()=>fallbackCopy(text,done));else fallbackCopy(text,done);}
+function fallbackCopy(text,done){const ta=document.createElement("textarea");ta.value=text;document.body.appendChild(ta);ta.select();try{document.execCommand("copy");done();}catch(e){}ta.remove();}
+
+window.addEventListener("online",()=>render());
+window.addEventListener("offline",()=>render());
+</script>
+</body>
+</html>
