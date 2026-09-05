@@ -690,9 +690,26 @@ function openBoxForm(type,box){
 
   sheet.querySelectorAll("#fIcons button").forEach(x=>x.addEventListener("click",()=>{icon=x.getAttribute("data-e");sheet.querySelectorAll("#fIcons button").forEach(y=>y.classList.remove("sel"));x.classList.add("sel");}));
   const cs=sheet.querySelector("#fCur");cs.addEventListener("change",()=>{const s=sheet.querySelector("#curSym");if(s)s.textContent=CURRENCIES[cs.value]||"";});
-  function paintMembers(){const ownerEmail=(box?String(box.ownerEmail||box.members[0]).toLowerCase():me.email);const box2=sheet.querySelector("#memberList");
-    box2.innerHTML=pendingMembers.length?pendingMembers.map(m=>{const o=(ownerEmail===m);return `<div class="memberrow"><span class="em">${esc(m)}</span>${o?'<span class="tag">Tú</span>':`<button data-remove="${esc(m)}">Quitar</button>`}</div>`;}).join(""):'<p class="empty">Solo tú.</p>';
-    box2.querySelectorAll("[data-remove]").forEach(btn=>btn.addEventListener("click",()=>{pendingMembers=pendingMembers.filter(x=>x!==btn.getAttribute("data-remove"));paintMembers();}));}
+  let editing=null;
+  function paintMembers(){
+    const ownerEmail=(box?String(box.ownerEmail||me.email).toLowerCase():me.email);
+    const cont=sheet.querySelector("#memberList");cont.innerHTML="";
+    if(!pendingMembers.length){cont.innerHTML='<p class="empty">Solo tú.</p>';return;}
+    pendingMembers.forEach(m=>{const o=(ownerEmail===m);
+      if(editing===m&&!o){
+        cont.appendChild(el(`<div class="memberrow"><input type="email" value="${esc(m)}" style="flex:1;min-width:0;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--ink);border-radius:9px;padding:9px 10px;font-size:15px"><button data-save="${esc(m)}" style="color:var(--accent)">Guardar</button><button data-cancel="1" style="color:var(--muted)">Cancelar</button></div>`));
+      }else{
+        cont.appendChild(el(`<div class="memberrow"><span class="em">${esc(m)}</span>${o?'<span class="tag">Tú</span>':`<button data-edit="${esc(m)}" style="color:var(--accent)">Editar</button><button data-remove="${esc(m)}">Quitar</button>`}</div>`));
+      }});
+    cont.querySelectorAll("[data-edit]").forEach(btn=>btn.addEventListener("click",()=>{editing=btn.getAttribute("data-edit");paintMembers();}));
+    cont.querySelectorAll("[data-cancel]").forEach(btn=>btn.addEventListener("click",()=>{editing=null;paintMembers();}));
+    cont.querySelectorAll("[data-remove]").forEach(btn=>btn.addEventListener("click",()=>{pendingMembers=pendingMembers.filter(x=>x!==btn.getAttribute("data-remove"));editing=null;paintMembers();}));
+    cont.querySelectorAll("[data-save]").forEach(btn=>btn.addEventListener("click",()=>{
+      const oldm=btn.getAttribute("data-save");const inp=btn.parentElement.querySelector("input");const nv=clean(inp.value).toLowerCase();const eb=sheet.querySelector("#fErr");eb.innerHTML="";
+      if(!validEmail(nv)){eb.innerHTML='<div class="err">Correo no válido.</div>';return;}
+      const i=pendingMembers.indexOf(oldm);
+      if(i>=0){ if(nv!==oldm&&pendingMembers.includes(nv)){pendingMembers.splice(i,1);} else {pendingMembers[i]=nv;} }
+      editing=null;paintMembers();});}
   paintMembers();
   sheet.querySelector("#fAddMember").addEventListener("click",()=>{const nm=clean(sheet.querySelector("#fNewMember").value).toLowerCase();const eb=sheet.querySelector("#fErr");eb.innerHTML="";
     if(!validEmail(nm)){eb.innerHTML=`<div class="err">Correo no válido.</div>`;return;}if(!pendingMembers.includes(nm))pendingMembers.push(nm);sheet.querySelector("#fNewMember").value="";paintMembers();});
