@@ -281,6 +281,7 @@ let boxes={};      // id -> data
 let entries={};    // boxId -> {entryId:data}
 let entryUnsub={}; // boxId -> unsub
 let subs=[]; let adminUnlocked=false; let syncPending=false;
+let bioEnabled=false, bioUnlocked=false;
 let view={name:"home"}; let migrationTried=false;
 
 /* ---------- boot ---------- */
@@ -293,11 +294,12 @@ window.addEventListener("DOMContentLoaded",()=>{
   try{firebase.initializeApp(firebaseConfig);fb.auth=firebase.auth();fb.db=firebase.firestore();fb.db.enablePersistence({synchronizeTabs:true}).catch(()=>{});}
   catch(e){renderConfigMissing(e.message);return;}
   renderLoading("Conectando…");
-  fb.auth.setPersistence(firebase.auth.Auth.Persistence.SESSION).catch(function(){}).then(function(){
+  try{ bioEnabled = localStorage.getItem("mp_bio")==="1" && !!localStorage.getItem("mp_bio_cred"); }catch(e){ bioEnabled=false; }
+  fb.auth.setPersistence(bioEnabled?firebase.auth.Auth.Persistence.LOCAL:firebase.auth.Auth.Persistence.SESSION).catch(function(){}).then(function(){
   fb.auth.onAuthStateChanged(u=>{
     stopSubs(); boxes={};entries={};userDoc=null;adminUnlocked=false;migrationTried=false;view={name:"home"};
     me.user=u; me.email=u?(u.email||"").toLowerCase():null; me.uid=u?u.uid:null;
-    if(u){ startSubs(); } else { renderLogin(); }
+    if(u){ if(bioEnabled && !bioUnlocked){ renderBioLock(); } else { startSubs(); } } else { renderLogin(); }
   });
   });
   window.addEventListener("online",render); window.addEventListener("offline",render);
@@ -406,6 +408,7 @@ function renderLogin(){
     if(!validEmail(email)){eb.innerHTML=`<div class="err">Escribe un correo válido.</div>`;return;}
     if((pass||"").length<6){eb.innerHTML=`<div class="err">La contraseña debe tener al menos 6 caracteres.</div>`;return;}
     const btn=card.querySelector("#lgGo");btn.disabled=true;btn.textContent="Un momento…";
+    bioUnlocked=true; // probó identidad con contraseña: no volver a pedir Face ID en esta apertura
     try{ if(loginMode==="in")await fb.auth.signInWithEmailAndPassword(email,pass); else await fb.auth.createUserWithEmailAndPassword(email,pass); }
     catch(e){btn.disabled=false;btn.textContent=loginMode==="in"?"Entrar":"Crear cuenta";eb.innerHTML=`<div class="err">${esc(authErr(e))}</div>`;}
   });
@@ -782,6 +785,7 @@ function requireAdmin(cb){
 function openMenu(){
   const sheet=el(`<div class="sheet"><div class="grip"></div><h3>Menú</h3><p class="sub">${esc(me.email||"")}</p>
     <div class="sheet-actions">
+      <button class="btn soft" id="mBio">${bioEnabled?"🔓 Desactivar Face ID / huella":"🙂 Entrar con Face ID / huella"}</button>
       <button class="btn soft" id="mChangeCode">${userDoc&&userDoc.adminHash?"Cambiar código de administrador":"Crear código de administrador"}</button>
       ${adminUnlocked?`<button class="btn soft" id="mLock">🔒 Bloquear administrador</button>`:``}
       <button class="btn danger" id="mOut">Cerrar sesión</button><button class="btn ghost" id="mClose">Cerrar</button></div></div>`);
@@ -789,6 +793,10 @@ function openMenu(){
   sheet.querySelector("#mOut").addEventListener("click",()=>fb.auth.signOut());
   const ml=sheet.querySelector("#mLock");if(ml)ml.addEventListener("click",()=>{adminUnlocked=false;scrim._close();render();});
   sheet.querySelector("#mChangeCode").addEventListener("click",()=>{scrim._close();requireAdmin(openChangeCode);});
+  sheet.querySelector("#mBio").addEventListener("click",async()=>{
+    if(bioEnabled){ disableBio(); bioEnabled=false; scrim._close(); alert("Face ID / huella desactivado. La próxima vez se pedirá correo y contraseña."); }
+    else{ const ok=await enableBio(); if(ok){ bioEnabled=true; scrim._close(); alert("¡Listo! La próxima vez que abras la app, entrarás con Face ID / huella."); } }
+  });
 }
 function openChangeCode(){
   const sheet=el(`<div class="sheet"><div class="grip"></div><h3>Código de administrador</h3><p class="sub">Elige un código (mín. 4 dígitos).</p>
@@ -823,6 +831,64 @@ function fc(t,done){const ta=document.createElement("textarea");ta.value=t;docum
 function openModal(node){const root=document.getElementById("modalRoot");const scrim=el(`<div class="scrim"></div>`);scrim.appendChild(node);root.appendChild(scrim);requestAnimationFrame(()=>scrim.classList.add("open"));scrim.addEventListener("click",e=>{if(e.target===scrim)closeModal(scrim);});scrim._close=()=>closeModal(scrim);return scrim;}
 function closeModal(s){s.classList.remove("open");setTimeout(()=>s.remove(),220);}
 function toggleTheme(){const r=document.documentElement,c=r.getAttribute("data-theme");const sd=window.matchMedia("(prefers-color-scheme:dark)").matches;let n;if(!c)n=sd?"light":"dark";else n=c==="dark"?"light":"dark";r.setAttribute("data-theme",n);try{localStorage.setItem("mp_theme",n);}catch(e){}}
+
+/* ---------- Face ID / huella (WebAuthn) ---------- */
+function b64e(buf){let s="";const a=new Uint8Array(buf);for(let i=0;i<a.length;i++)s+=String.fromCharCode(a[i]);return btoa(s);}
+function b64d(str){const bin=atob(str);const a=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i);return a.buffer;}
+async function bioAvailable(){try{return !!(window.PublicKeyCredential)&&await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();}catch(e){return false;}}
+async function enableBio(){
+  if(!(await bioAvailable())){alert("Este teléfono/navegador no permite Face ID o huella aquí. En iPhone usa Safari.");return false;}
+  try{
+    const challenge=crypto.getRandomValues(new Uint8Array(32));
+    const uid=crypto.getRandomValues(new Uint8Array(16));
+    const cred=await navigator.credentials.create({publicKey:{
+      challenge, rp:{name:"Mi Control", id:location.hostname},
+      user:{id:uid, name:me.email||"usuario", displayName:me.email||"usuario"},
+      pubKeyCredParams:[{type:"public-key",alg:-7},{type:"public-key",alg:-257}],
+      authenticatorSelection:{authenticatorAttachment:"platform", userVerification:"required", residentKey:"preferred"},
+      timeout:60000, attestation:"none"
+    }});
+    if(!cred||!cred.rawId) throw new Error("sin credencial");
+    localStorage.setItem("mp_bio","1");
+    localStorage.setItem("mp_bio_cred", b64e(cred.rawId));
+    localStorage.setItem("mp_bio_email", me.email||"");
+    await fb.auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(()=>{});
+    bioUnlocked=true;
+    return true;
+  }catch(e){ alert("No se pudo activar: "+(e.message||e)); return false; }
+}
+function disableBio(){try{localStorage.removeItem("mp_bio");localStorage.removeItem("mp_bio_cred");localStorage.removeItem("mp_bio_email");}catch(e){}fb.auth.setPersistence(firebase.auth.Auth.Persistence.SESSION).catch(()=>{});}
+async function bioUnlock(){
+  try{
+    const credId=localStorage.getItem("mp_bio_cred"); if(!credId) return false;
+    const challenge=crypto.getRandomValues(new Uint8Array(32));
+    const assertion=await navigator.credentials.get({publicKey:{
+      challenge, timeout:60000, rpId:location.hostname,
+      allowCredentials:[{type:"public-key", id:b64d(credId), transports:["internal"]}],
+      userVerification:"required"
+    }});
+    if(assertion){ bioUnlocked=true; startSubs(); return true; }
+  }catch(e){}
+  return false;
+}
+function renderBioLock(){
+  const root=document.getElementById("root");
+  root.innerHTML=`<div class="center-screen"><div class="login-card">
+    <div class="lead"><div class="biglogo">${logoSvg()}</div><h2>Mi Control</h2><p class="tag">Desbloquea para continuar</p></div>
+    <div id="bioErr"></div>
+    <div class="sheet-actions">
+      <button class="btn primary" id="bioBtn">🙂 Desbloquear con Face ID / huella</button>
+      <button class="btn ghost" id="bioPass">Usar correo y contraseña</button>
+    </div></div></div>`;
+  document.getElementById("credit").innerHTML="";
+  document.getElementById("bioBtn").addEventListener("click",async()=>{
+    const ok=await bioUnlock();
+    if(!ok) document.getElementById("bioErr").innerHTML=`<div class="err">No se pudo desbloquear. Intenta otra vez o usa tu contraseña.</div>`;
+  });
+  document.getElementById("bioPass").addEventListener("click",()=>{ bioUnlocked=true; fb.auth.signOut(); });
+  // intento automático de desbloqueo (algunos navegadores lo permiten sin tocar el botón)
+  setTimeout(()=>{ bioUnlock().then(ok=>{ if(!ok){/* esperar toque del usuario */} }); }, 300);
+}
 </script>
 </body>
 </html>
