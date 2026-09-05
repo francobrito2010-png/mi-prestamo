@@ -1,22 +1,19 @@
-# 💸 Mi Préstamo
+# 💸 Mi Control
 
-App privada para controlar un préstamo a cuotas fijas: pagos, comprobantes (foto), saldo pendiente, cuotas vencidas y sincronización en tiempo real entre varios teléfonos.
+App privada para controlar tu dinero con **cuadros**: préstamos (cuotas que terminan) y **gastos mensuales fijos** (alquiler, luz, agua, internet, Netflix, transporte…), con comprobantes (foto), en tiempo real y con funcionamiento offline. Incluye un cuadro **Resumen** con tus totales.
+
+- **Web:** https://francobrito2010-png.github.io/mi-prestamo/
+- **Firebase:** proyecto `mi-prestamo-c839b` (Auth correo/contraseña + Firestore).
 
 ## Seguridad
-- **Login obligatorio** (Firebase Authentication, correo + contraseña). Nadie entra sin cuenta.
-- **Reglas de Firestore cerradas** con *catch-all* en `false`: solo el dueño y los correos autorizados acceden.
-- **Roles**: el **dueño** puede todo; los **miembros** solo ven y registran pagos (no borran ni editan).
-- **Código de administrador**: segunda barrera antes de editar/borrar.
+- **Login obligatorio** (Firebase Authentication).
+- **Reglas de Firestore cerradas** con *catch-all* en `false` (ver `firestore.rules`, se despliega con `firebase deploy --only firestore:rules`).
+- **Cada cuadro es privado** de su dueño; se comparte por cuadro añadiendo correos. Los invitados **ven y registran** pagos; **editar/borrar es solo del dueño** (forzado en el servidor).
+- **Código de administrador** (por usuario, hash SHA-256) como barrera extra antes de editar/borrar.
 - Meta **CSP**, **frame-buster** (anti-clickjacking) y **DOMPurify** para sanear textos.
 
-## Puesta en marcha (una sola vez)
-1. Crea un proyecto gratis en https://console.firebase.google.com
-2. **Firestore Database** → *Crear base de datos* (modo producción, región europe-west).
-3. **Authentication** → *Comenzar* → pestaña *Sign-in method* → activa **Correo electrónico/contraseña**.
-4. **Configuración del proyecto (⚙️)** → *Tus apps* → icono web `</>` → registra la app y copia el bloque `firebaseConfig`.
-5. Pega ese bloque en `index.html` (donde dice `PEGA_AQUI`).
-6. **Firestore → Reglas**: pega el contenido de `FIRESTORE-RULES.txt` y *Publicar*.
-7. Abre la web, **crea tu cuenta** (serás el administrador) y configura el préstamo.
-8. En *Editar datos → Personas con acceso*, agrega el correo de tu compañero.
-
-Los datos viven en tu Firebase, no dependen del hosting.
+## Modelo de datos (Firestore)
+- `users/{uid}` — perfil privado (guarda `adminHash`).
+- `boxes/{boxId}` — un cuadro: `type` (`prestamo`|`gasto`), `ownerUid`, `members[]`, y su configuración.
+- `boxes/{boxId}/entries/{id}` — pagos: cuotas (`c1`, `c2`…) o meses (`2026-09`).
+- `meta/access`, `loan/*`, `payments/*` — legado del primer préstamo (solo lectura, se migra solo al nuevo formato).

@@ -2,40 +2,54 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    function signedIn()   { return request.auth != null && request.auth.token.email != null; }
-    function accExists()   { return exists(/databases/$(database)/documents/meta/access); }
-    function acc()         { return get(/databases/$(database)/documents/meta/access).data; }
-    function myEmail()     { return request.auth.token.email.lower(); }
-    function isOwner()     { return signedIn() && accExists() && myEmail() == acc().owner.lower(); }
-    function isMember()    { return signedIn() && accExists() && ( isOwner() || (myEmail() in acc().members) ); }
+    function signedIn() { return request.auth != null && request.auth.token.email != null; }
+    function myEmail()  { return request.auth.token.email.lower(); }
 
-    // Documento de control de acceso (dueño + personas autorizadas + código admin)
+    // ---- Perfil privado de cada usuario (guarda el código de administrador) ----
+    match /users/{uid} {
+      allow read, write: if signedIn() && request.auth.uid == uid;
+    }
+
+    // ---- Cuadros (préstamos y gastos) ----
+    function box(boxId)      { return get(/databases/$(database)/documents/boxes/$(boxId)).data; }
+    function boxExists(boxId){ return exists(/databases/$(database)/documents/boxes/$(boxId)); }
+    function isBoxMember(boxId){ return signedIn() && boxExists(boxId) && (myEmail() in box(boxId).members); }
+    function isBoxOwner(boxId) { return signedIn() && boxExists(boxId) && request.auth.uid == box(boxId).ownerUid; }
+
+    match /boxes/{boxId} {
+      allow read:   if signedIn() && (myEmail() in resource.data.members);
+      allow create: if signedIn()
+                    && request.resource.data.ownerUid == request.auth.uid
+                    && request.resource.data.ownerEmail.lower() == myEmail()
+                    && (myEmail() in request.resource.data.members);
+      allow update: if signedIn() && resource.data.ownerUid == request.auth.uid
+                    && request.resource.data.ownerUid == request.auth.uid;
+      allow delete: if signedIn() && resource.data.ownerUid == request.auth.uid;
+
+      // Registros (cuotas pagadas / meses pagados)
+      match /entries/{entryId} {
+        allow read:   if isBoxMember(boxId);
+        allow create: if isBoxMember(boxId)
+                      && request.resource.data.amount is number
+                      && (!('receipt' in request.resource.data) || request.resource.data.receipt.size() < 900000);
+        allow update, delete: if isBoxOwner(boxId);
+      }
+    }
+
+    // ---- Legado: préstamo original (solo lectura, para migrarlo al nuevo formato) ----
+    function legacyExists(){ return exists(/databases/$(database)/documents/meta/access); }
+    function legacyAcc()   { return get(/databases/$(database)/documents/meta/access).data; }
+    function legacyMember(){ return signedIn() && legacyExists()
+                            && (myEmail() == legacyAcc().owner.lower() || (myEmail() in legacyAcc().members)); }
     match /meta/access {
       allow read:   if signedIn();
-      allow create: if signedIn()
-                    && !accExists()
-                    && request.resource.data.owner.lower() == myEmail()
-                    && (myEmail() in request.resource.data.members);
-      allow update: if isOwner() && request.resource.data.owner.lower() == myEmail();
-      allow delete: if false;
+      allow update: if signedIn() && legacyExists() && myEmail() == legacyAcc().owner.lower();
+      allow create, delete: if false;
     }
+    match /loan/{doc=**}  { allow read: if legacyMember(); allow write: if false; }
+    match /payments/{id}  { allow read: if legacyMember(); allow write: if false; }
 
-    // Datos del préstamo: cualquier miembro lee, solo el dueño escribe
-    match /loan/{doc=**} {
-      allow read:  if isMember();
-      allow write: if isOwner();
-    }
-
-    // Cuotas/pagos: los miembros leen y REGISTRAN; solo el dueño edita/borra
-    match /payments/{id} {
-      allow read:   if isMember();
-      allow create: if isMember()
-                    && request.resource.data.amount is number
-                    && (!('receipt' in request.resource.data) || request.resource.data.receipt.size() < 900000);
-      allow update, delete: if isOwner();
-    }
-
-    // Catch-all: bloquear TODO lo demás
+    // ---- Bloquear todo lo demás ----
     match /{document=**} { allow read, write: if false; }
   }
 }
