@@ -709,7 +709,8 @@ function openBoxForm(type,box){
       if(!validEmail(nv)){eb.innerHTML='<div class="err">Correo no válido.</div>';return;}
       const i=pendingMembers.indexOf(oldm);
       if(i>=0){ if(nv!==oldm&&pendingMembers.includes(nv)){pendingMembers.splice(i,1);} else {pendingMembers[i]=nv;} }
-      editing=null;paintMembers();});}
+      editing=null;paintMembers();}));
+  }
   paintMembers();
   sheet.querySelector("#fAddMember").addEventListener("click",()=>{const nm=clean(sheet.querySelector("#fNewMember").value).toLowerCase();const eb=sheet.querySelector("#fErr");eb.innerHTML="";
     if(!validEmail(nm)){eb.innerHTML=`<div class="err">Correo no válido.</div>`;return;}if(!pendingMembers.includes(nm))pendingMembers.push(nm);sheet.querySelector("#fNewMember").value="";paintMembers();});
