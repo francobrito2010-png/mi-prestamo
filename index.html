@@ -12,6 +12,13 @@
            connect-src 'self' https://*.googleapis.com https://*.gstatic.com https://firebaseinstallations.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com;
            frame-ancestors 'none'; base-uri 'self'; form-action 'self';">
 <meta name="theme-color" content="#12785b">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Mi Control">
 <title>Mi Control</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -281,6 +288,7 @@ window.addEventListener("DOMContentLoaded",()=>{
   document.getElementById("viewerClose").addEventListener("click",()=>document.getElementById("viewer").classList.remove("open"));
   document.getElementById("viewer").addEventListener("click",e=>{if(e.target.id==="viewer")e.currentTarget.classList.remove("open");});
   try{const t=localStorage.getItem("mp_theme");if(t)document.documentElement.setAttribute("data-theme",t);}catch(e){}
+  if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js").catch(function(){});}
   if(!firebaseConfig||firebaseConfig.apiKey==="PEGA_AQUI"){renderConfigMissing();return;}
   try{firebase.initializeApp(firebaseConfig);fb.auth=firebase.auth();fb.db=firebase.firestore();fb.db.enablePersistence({synchronizeTabs:true}).catch(()=>{});}
   catch(e){renderConfigMissing(e.message);return;}
